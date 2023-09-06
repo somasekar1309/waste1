@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creating the ec2 instances with vpc and subnet and RouteTableId
+
+
+Parameters:
+  VpcCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: creating the vpc
+
+  subnetCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: creating the vpc
+
+  UserName:
+    Type: String
+    Default: Ganga
+    Description: Enter the name for the IAM user
+
+  UserName1:
+    Type: String
+    Default: soma
+    Description: Enter the name for the IAM user
+
+  UserName2:
+    Type: String
+    Default: vamsi
+    Description: Enter the name for the IAM user
+
+  ADMIN:
+    Type: String
+    Default: admingroup
+    Description: Enter the name of the group
+
+
+Resources:
+
+# creating the group
+
+  Group:
+    Type: AWS::IAM::Group
+    Properties: 
+      GroupName: 
+        Ref: ADMIN
+
+# creating the users
+
+  MyUser1:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: 
+        Ref: UserName1
+
+  MyUser2:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: 
+        Ref: UserName2
+
+
+  addusertothegroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties: 
+      GroupName: 
+        Ref: Group
+      Users: 
+      - Ref: MyUser1
+      - Ref: MyUser2
+      - Ref: MyUser
+
+
+# creating the vpc
+  done:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 
+        Ref: VpcCIDR
+      Tags: 
+      - Key: rk
+        Value: so
+
+# craeting the subnet
+
+  Mysubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      CidrBlock:
+        Ref: subnetCIDR
+      VpcId:
+        Ref: done
+      Tags:
+      - Key: New
+        Value: subnet
+
+# creating the internetgateway
+  InternetGatewayId:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: stack
+        Value: production
+
+# attaching the internet gateway to the vpc
+  Attachthegateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId:
+        Ref: InternetGatewayId
+      VpcId: 
+        Ref: done
+
+# creating the route table
+
+  RouteTableId:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId:
+        Ref: done
+      Tags: 
+      - Key: new
+        Value: Rt
+
+# giving the routes to the route table
+
+  myRoute:
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId:
+         Ref: RouteTableId
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: InternetGatewayId
+
+# giving the subnet association to the route table
+
+  mySubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: Mysubnet
+      RouteTableId:
+        Ref: RouteTableId
+
+
+# CREATING THE IAM USER FOR THE AWS ACCOUNT
+
+  MyUser:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: 
+        Ref: UserName
+      LoginProfile:
+        Password: "Ganga@1309"
+
+
+
+ # creating the access key and secret key
+
+  iamAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Status: Active
+      UserName:  
+        Ref: MyUser
+
+# creating the policy for the user
+  
+  Gangapolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "admin"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Users:
+        - Ref: MyUser
+
+
+
+
+
+  
+     
+
+
